@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from model import (
     User, AuditLog, UserCreate, UserLogin, Token, TransferRequest,
@@ -62,7 +62,20 @@ def get_transaction_history(
         .order_by(AuditLog.timestamp.desc())
         .all()
     )
-    return logs
+    result = []
+    for log in logs:
+        log_dict = {
+            "id": log.id,
+            "sender_id": log.sender_id,
+            "receiver_id": log.receiver_id,
+            "amount": log.amount,
+            "timestamp": log.timestamp.replace(tzinfo=timezone.utc).isoformat() if log.timestamp else None,
+            "status": log.status,
+            "previous_hash": log.previous_hash,
+            "entry_hash": log.entry_hash
+        }
+        result.append(log_dict)
+    return result
 
 @router.post("/transfer", response_model=TransferResponse)
 def perform_transfer(
@@ -77,7 +90,7 @@ def perform_transfer(
     logger.info(f"Transfer initiated: {request.sender_id} → {request.receiver_identifier} (${request.amount})")
 
     try:
-        transfer_funds(db, request.sender_id, request.receiver_identifier, request.amount)
+        transfer_funds(db, request.sender_id, request.receiver_identifier, request.amount )
         db.commit()
         return TransferResponse(status="success", message="Transfer successful")
 
