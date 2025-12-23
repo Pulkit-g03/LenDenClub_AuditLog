@@ -176,7 +176,7 @@ const Account = () => {
       const counterparty = getCounterpartyDisplay(log);
       const date = formatDate(log.timestamp);
       const status = log.status === 'SUCCESS' ? (isOutgoing ? 'Sent' : 'Received') : log.status;
-      const amount = (isOutgoing ? '-' : '+') + '$' + log.amount.toFixed(2);
+      const amount = (isOutgoing ? '-' : '+') + '₹' + log.amount.toFixed(2);
 
       const line = `${log.id.toString().padEnd(6)}${counterparty.padEnd(20)}${date.padEnd(17)}${status.padEnd(14)}${amount}`;
       doc.text(line, 14, y);
@@ -224,7 +224,7 @@ const Account = () => {
           {/* Balance Card */}
           <div className="card balance-card">
             <p className="label">Current Balance</p>
-            <h1 className="balance-amount">${balance.toFixed(2)}</h1>
+            <h1 className="balance-amount">₹{balance.toFixed(2)}</h1>
             <div className="card-pattern" />
           </div>
 
@@ -256,9 +256,9 @@ const Account = () => {
                 </div>
               </div>
               <div className="input-group">
-                <label>Amount ($)</label>
+                <label>Amount (₹)</label>
                 <div className="input-wrapper">
-                  <span className="currency-symbol">$</span>
+                  <span className="currency-symbol">₹</span>
                   <input
                     type="number"
                     placeholder="0.00"
@@ -271,7 +271,7 @@ const Account = () => {
                 </div>
               </div>
               <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Transferring...' : `Send $${amount || '0.00'}`}
+                {loading ? 'Transferring...' : `Send ₹${amount || '0.00'}`}
               </button>
             </form>
           </div>
@@ -338,8 +338,8 @@ const Account = () => {
                           {log.status === 'SUCCESS' ? (isOutgoing ? 'Sent' : 'Received') : log.status}
                         </span>
                       </td>
-                      <td className={`text-right font-bold ${!isOutgoing ? 'text-green' : ''}`}>
-                        {isOutgoing ? '-' : '+'}${log.amount.toFixed(2)}
+                      <td className={`text-right font-bold ₹{!isOutgoing ? 'text-green' : ''}`}>
+                        {isOutgoing ? '-' : '+'}₹{log.amount.toFixed(2)}
                       </td>
                     </tr>
                   );

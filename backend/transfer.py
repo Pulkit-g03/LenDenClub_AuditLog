@@ -177,7 +177,7 @@ def transfer_funds(
         )
 
         logger.info(
-            f"Transfer successful: {sender_id} → {receiver.id} (${amount:.2f}) "
+            f"Transfer successful: {sender_id} → {receiver.id} (₹{amount:.2f}) "
             f"| Receiver email: {receiver.email}"
         )
 

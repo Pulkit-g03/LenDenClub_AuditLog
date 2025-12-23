@@ -87,7 +87,7 @@ def perform_transfer(
         raise HTTPException(status_code=403, detail="You can only transfer from your own account")
 
     # FIXED: receiver_id (not receiver_identifier)
-    logger.info(f"Transfer initiated: {request.sender_id} → {request.receiver_identifier} (${request.amount})")
+    logger.info(f"Transfer initiated: {request.sender_id} → {request.receiver_identifier} (₹{request.amount})")
 
     try:
         transfer_funds(db, request.sender_id, request.receiver_identifier, request.amount )
