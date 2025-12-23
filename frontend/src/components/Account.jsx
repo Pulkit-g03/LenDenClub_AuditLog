@@ -1,7 +1,7 @@
 // src/components/Account.jsx
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import jsPDF from 'jspdf'; // ← Make sure to run: npm install jspdf
+import jsPDF from 'jspdf';
 
 const Account = () => {
   const [user, setUser] = useState(null);
@@ -119,6 +119,12 @@ const Account = () => {
       return counterpartyId;
     }
     return counterpartyId?.toString() || 'Unknown';
+  };
+
+  // === LOGOUT ===
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   };
 
   // === EXPORT TO CSV ===
@@ -290,6 +296,14 @@ const Account = () => {
             <div className="table-actions">
               <button className="btn-outline" onClick={exportToCSV}>Export CSV</button>
               <button className="btn-outline" onClick={exportToPDF}>Export PDF</button>
+              <button className="btn-logout" onClick={handleLogout}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+              </button>
             </div>
           </div>
 
@@ -338,7 +352,7 @@ const Account = () => {
                           {log.status === 'SUCCESS' ? (isOutgoing ? 'Sent' : 'Received') : log.status}
                         </span>
                       </td>
-                      <td className={`text-right font-bold ₹{!isOutgoing ? 'text-green' : ''}`}>
+                      <td className={`text-right font-bold ${!isOutgoing ? 'text-green' : ''}`}>
                         {isOutgoing ? '-' : '+'}₹{log.amount.toFixed(2)}
                       </td>
                     </tr>
@@ -357,7 +371,6 @@ const Account = () => {
         </section>
       </main>
 
-      {/* Your original full CSS */}
       <style jsx>{`
         :root {
           --primary: #534ced;
@@ -404,6 +417,24 @@ const Account = () => {
         .icon-circle { width: 36px; height: 36px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .table-actions { display: flex; gap: 10px; }
         .btn-outline { background: white; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 8px; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+        .btn-logout { 
+          background: #fee2e2; 
+          border: 1px solid #fecaca; 
+          padding: 8px 16px; 
+          border-radius: 8px; 
+          font-size: 13px; 
+          color: #dc2626; 
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+        .btn-logout:hover {
+          background: #fecaca;
+          border-color: #fca5a5;
+        }
         .transaction-table { width: 100%; border-collapse: collapse; }
         .transaction-table th { text-align: left; padding: 12px 24px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); }
         .transaction-table td { padding: 16px 24px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
