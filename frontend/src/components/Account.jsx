@@ -43,6 +43,7 @@ const Account = () => {
   const handleTransfer = async (e) => {
     e.preventDefault();
     if (!user || !receiverIdentifier || !amount) return;
+
     setLoading(true);
     try {
       await api.post('/transfer', {
@@ -50,11 +51,17 @@ const Account = () => {
         receiver_identifier: receiverIdentifier,
         amount: parseFloat(amount),
       });
-      setBalance(prev => prev - parseFloat(amount));
+
+      const [meRes, historyRes] = await Promise.all([
+        api.get('/me'),
+        api.get('/history')
+      ]);
+
+      setUser(meRes.data);
+      setLogs(historyRes.data || []);
+
       setReceiverIdentifier('');
       setAmount('');
-      const historyRes = await api.get('/history');
-      setLogs(historyRes.data || []);
       alert('Transfer successful!');
     } catch (err) {
       alert('Transfer failed: ' + (err.response?.data?.detail || 'Server error'));
@@ -97,8 +104,12 @@ const Account = () => {
     return formatter.format(date);
   };
 
-  const getInitials = (id) => {
-    return typeof id === 'number' ? id.toString()[0] : (id?.[0]?.toUpperCase() || 'U');
+  const getInitials = (email) => {
+    if (!email) return 'U';
+    if (email.includes('@')) {
+      return email.charAt(0).toUpperCase();
+    }
+    return email.charAt(0).toUpperCase();
   };
 
   const getColorClass = (index) => {
@@ -113,21 +124,19 @@ const Account = () => {
 
   const getCounterpartyDisplay = (log) => {
     const isOutgoing = log.sender_id === user.id;
-    const counterpartyId = isOutgoing ? log.receiver_id : log.sender_id;
-
-    if (typeof counterpartyId === 'string' && counterpartyId.includes('@')) {
-      return counterpartyId;
+    
+    if (isOutgoing) {
+      return log.receiver_email || `User #${log.receiver_id}`;
+    } else {
+      return log.sender_email || `User #${log.sender_id}`;
     }
-    return counterpartyId?.toString() || 'Unknown';
   };
 
-  // === LOGOUT ===
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
 
-  // === EXPORT TO CSV ===
   const exportToCSV = () => {
     if (logs.length === 0) {
       alert('No transactions to export.');
@@ -156,7 +165,6 @@ const Account = () => {
     document.body.removeChild(link);
   };
 
-  // === EXPORT TO PDF ===
   const exportToPDF = () => {
     if (logs.length === 0) {
       alert('No transactions to export.');
@@ -219,6 +227,7 @@ const Account = () => {
           <div className="user-info">
             <span className="welcome-text">Welcome back,</span>
             <span className="user-name">{user.email.split('@')[0]}</span>
+            <span className="user-id">ID: {user.id}</span>
           </div>
           <img src={`https://i.pravatar.cc/150?u=${user.email}`} alt="Avatar" className="avatar" />
         </div>
@@ -333,7 +342,7 @@ const Account = () => {
               ) : (
                 logs.map((log, index) => {
                   const isOutgoing = log.sender_id === user.id;
-                  const counterpartyId = isOutgoing ? log.receiver_id : log.sender_id;
+                  const counterpartyEmail = isOutgoing ? log.receiver_email : log.sender_email;
 
                   return (
                     <tr key={log.id}>
@@ -341,7 +350,7 @@ const Account = () => {
                       <td>
                         <div className="user-cell">
                           <span className={`initials ${getColorClass(index)}`}>
-                            {getInitials(counterpartyId)}
+                            {getInitials(counterpartyEmail)}
                           </span>
                           <span>{getCounterpartyDisplay(log)}</span>
                         </div>
@@ -391,6 +400,7 @@ const Account = () => {
         .user-info { text-align: right; }
         .welcome-text { display: block; font-size: 12px; color: var(--text-muted); }
         .user-name { font-weight: 600; font-size: 14px; }
+        .user-id { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
         .main-content { display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding-bottom: 40px; }
         .card { background: var(--white); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; }

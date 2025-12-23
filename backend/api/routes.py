@@ -62,12 +62,19 @@ def get_transaction_history(
         .order_by(AuditLog.timestamp.desc())
         .all()
     )
+    
     result = []
     for log in logs:
+        # Fetch sender and receiver emails
+        sender = db.query(User).filter(User.id == log.sender_id).first()
+        receiver = db.query(User).filter(User.id == log.receiver_id).first() if log.receiver_id else None
+        
         log_dict = {
             "id": log.id,
             "sender_id": log.sender_id,
+            "sender_email": sender.email if sender else None,
             "receiver_id": log.receiver_id,
+            "receiver_email": receiver.email if receiver else None,
             "amount": log.amount,
             "timestamp": log.timestamp.replace(tzinfo=timezone.utc).isoformat() if log.timestamp else None,
             "status": log.status,
@@ -75,6 +82,7 @@ def get_transaction_history(
             "entry_hash": log.entry_hash
         }
         result.append(log_dict)
+    
     return result
 
 @router.post("/transfer", response_model=TransferResponse)
@@ -86,11 +94,10 @@ def perform_transfer(
     if request.sender_id != current_user.id:
         raise HTTPException(status_code=403, detail="You can only transfer from your own account")
 
-    # FIXED: receiver_id (not receiver_identifier)
     logger.info(f"Transfer initiated: {request.sender_id} → {request.receiver_identifier} (₹{request.amount})")
 
     try:
-        transfer_funds(db, request.sender_id, request.receiver_identifier, request.amount )
+        transfer_funds(db, request.sender_id, request.receiver_identifier, request.amount)
         db.commit()
         return TransferResponse(status="success", message="Transfer successful")
 
