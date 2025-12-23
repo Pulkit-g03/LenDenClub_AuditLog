@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, Float, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, Float, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional, Union
+from datetime import UTC
 
 Base = declarative_base()
 
@@ -17,11 +18,15 @@ class User(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)
-    sender_id = Column(Integer)
-    receiver_id = Column(Integer)
-    amount = Column(Float)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default="SUCCESS")
+    sender_id = Column(Integer, ForeignKey('users.id'), index=True)     # Add FK before keyword args
+    receiver_id = Column(Integer, ForeignKey('users.id'), index=True)   # For better querying
+    amount = Column(Float, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String, default="SUCCESS", index=True)
+
+    # Optional: Add a hash chain for tamper-evidence
+    previous_hash = Column(String)  # Hash of previous row
+    entry_hash = Column(String, index=True)  # Hash of this row's data
 
 # UPDATED: Accept either email or ID for receiver
 class TransferRequest(BaseModel):
@@ -39,13 +44,18 @@ class BalanceResponse(BaseModel):
 class AuditLogResponse(BaseModel):
     id: int
     sender_id: int
-    receiver_id: int
+    receiver_id: int | None
     amount: float
     timestamp: datetime
     status: str
-
+    previous_hash: str | None = None
+    entry_hash: str
+    
     class Config:
-        from_attributes = True  
+        from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        } 
 
 class UserCreate(BaseModel):
     email: str
