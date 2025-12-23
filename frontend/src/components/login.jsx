@@ -48,7 +48,7 @@ const Login = ({ onLogin }) => {
         }}
       >
         <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
-          Login / Register
+          Login
         </h2>
 
         <form onSubmit={handleSubmit}>
